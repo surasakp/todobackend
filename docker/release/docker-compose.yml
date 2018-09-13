@@ -1,0 +1,67 @@
+version: "3"
+
+volumes:
+    webroot:
+        driver: local
+    cache:
+        external: true
+
+services: 
+  app:
+    build:
+      context: ../../
+      dockerfile: docker/release/Dockerfile
+    depends_on:
+      - db
+    volumes:
+      - ../../src:/application
+      - cache:/cache
+      - webroot:/var/www/todobackend
+    environment:
+      DJANGO_SETTINGS_MODULE: todobackend.settings.release
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_HOST: db
+      TEST_OUTPUT_DIR: /reports
+      DEBUG: "true"
+    command:
+      - uwsgi
+      - "--socket /var/www/todobackend/todobackend.sock"
+      - "--chmod-socket=666"
+      - "--module todobackend.wsgi"
+      - "--master"
+      - "--die-on-term"
+
+  nginx:
+    image: nginx
+    depends_on:
+      - app
+    volumes:
+      - webroot:/var/www/todobackend
+      - ./todobackend.conf:/etc/nginx/conf.d/todobackend.conf
+    ports:
+      - "8000:8000"
+    # command: "cp todobackend.conf /etc/nginx/conf.d/todobackend.conf"
+
+  test:
+    image: bell/todobackend-spaces
+    depends_on:
+      - nginx
+    environment:
+      URL: http://nginx:8000/todos
+      JUNIT_REPORT_PATH: /reports/acceptance.xml
+      JUNIT_REPORT_STACK: 1
+    command: --reporter mocha-jenkins-reporter
+
+  # https://github.com/peter-evans/docker-compose-healthcheck
+  db:
+    image: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h db -p 5432 -q -U postgres"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+    environment: 
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: db

@@ -1,0 +1,36 @@
+version: '2.1'
+
+services: 
+  test:
+    build: 
+      context: ../../
+      dockerfile: docker/dev/Dockerfile
+    volumes_from:
+      - cache
+    volumes:
+      - ../../src:/application
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DJANGO_SETTINGS_MODULE: todobackend.settings.test
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_HOST: db
+      TEST_OUTPUT_DIR: /reports
+
+  db:
+    image: postgres:9.6
+    healthcheck:
+      test: "pg_isready -d todobackend -h db -p 5432 -q -U postgres"
+      interval: 3s
+      timeout: 5s
+      retries: 5
+
+  cache:
+    build: 
+      context: ../../
+      dockerfile: docker/dev/Dockerfile
+    volumes:
+      - /tmp/cache:/cache
+    entrypoint: "true"
