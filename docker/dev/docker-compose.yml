@@ -1,14 +1,17 @@
 version: '2.1'
 
+volumes: 
+  cache:
+    external: true
+
 services: 
   test:
     build: 
       context: ../../
       dockerfile: docker/dev/Dockerfile
-    volumes_from:
-      - cache
     volumes:
-      - ../../src:/application
+      # - ../../src:/application
+      - cache:/cache
     depends_on:
       db:
         condition: service_healthy
@@ -20,17 +23,9 @@ services:
       TEST_OUTPUT_DIR: /reports
 
   db:
-    image: postgres:9.6
+    image: postgres
     healthcheck:
-      test: "pg_isready -d todobackend -h db -p 5432 -q -U postgres"
+      test: ["CMD-SHELL", "pg_isready -h db -p 5432 -q -U postgres"]
       interval: 3s
       timeout: 5s
       retries: 5
-
-  cache:
-    build: 
-      context: ../../
-      dockerfile: docker/dev/Dockerfile
-    volumes:
-      - /tmp/cache:/cache
-    entrypoint: "true"

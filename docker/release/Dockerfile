@@ -1,5 +1,5 @@
-FROM bell/todobackend-base:latest
-MAINTAINER bell
+FROM surasakp/todobackend-base:latest
+MAINTAINER surasakp <bell.sph@gmail.com>
 
 # Copy application
 COPY /src/ /application

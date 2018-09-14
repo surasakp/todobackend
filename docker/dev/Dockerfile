@@ -1,20 +1,15 @@
-FROM bell/todobackend-base:latest
-MAINTAINER bell
+FROM surasakp/todobackend-base:latest
+MAINTAINER surasakp <bell.sph@gmail.com>
 
 # Install dev/build dependencies
 RUN apt-get update && \
     apt-get install -qy python-dev libpq-dev
 
 # Activate virtual environment and install wheel support
-# RUN . /appenv/bin/activate && pip install wheel --upgrade
 RUN . /appenv/bin/activate
 
 # PIP environment variables (NOTE: must be set after installing wheel)
-# ENV WHEELHOUSE=/wheelhouse PIP_WHEEL_DIR=/wheelhouse PIP_FIND_LINKS=/wheelhouse XDG_CACHE_HOME=/cache
 ENV XDG_CACHE_HOME=/cache
-
-# OUTPUT: Build artifacts (Wheels) are output here
-# VOLUME /wheelhouse
 
 # OUTPUT: Test reports are output here
 VOLUME /reports

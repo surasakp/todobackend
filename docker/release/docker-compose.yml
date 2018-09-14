@@ -6,7 +6,20 @@ volumes:
     cache:
         external: true
 
-services: 
+services:
+  # https://github.com/peter-evans/docker-compose-healthcheck
+  db:
+    image: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h db -p 5432 -q -U postgres"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+    environment: 
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: db
+
   app:
     build:
       context: ../../
@@ -14,7 +27,6 @@ services:
     depends_on:
       - db
     volumes:
-      - ../../src:/application
       - cache:/cache
       - webroot:/var/www/todobackend
     environment:
@@ -33,18 +45,18 @@ services:
       - "--die-on-term"
 
   nginx:
-    image: nginx
+    build: 
+      context: .
+      dockerfile: Dockerfile.nginx
     depends_on:
       - app
     volumes:
       - webroot:/var/www/todobackend
-      - ./todobackend.conf:/etc/nginx/conf.d/todobackend.conf
     ports:
       - "8000:8000"
-    # command: "cp todobackend.conf /etc/nginx/conf.d/todobackend.conf"
 
   test:
-    image: bell/todobackend-spaces
+    image: surasakp/todobackend-specs
     depends_on:
       - nginx
     environment:
@@ -52,16 +64,3 @@ services:
       JUNIT_REPORT_PATH: /reports/acceptance.xml
       JUNIT_REPORT_STACK: 1
     command: --reporter mocha-jenkins-reporter
-
-  # https://github.com/peter-evans/docker-compose-healthcheck
-  db:
-    image: postgres
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h db -p 5432 -q -U postgres"]
-      interval: 3s
-      timeout: 5s
-      retries: 5
-    environment: 
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: db
