@@ -44,8 +44,6 @@ test:
 	${INFO} "Testing complete"
 
 release:
-	${INFO} "Creating cache volume..."
-	@ docker volume create --name cache
 	${INFO} "Pulling latest images..."
 	@ docker-compose -p $(REL_PROJECT) -f $(REL_COMPOSE_FILE) pull test
 	${INFO} "Building images..."
